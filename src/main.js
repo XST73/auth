@@ -1,9 +1,8 @@
 const { invoke } = window.__TAURI__.core;
-const { open, save } = window.__TAURI__.dialog;
+const { open } = window.__TAURI__.dialog;
 const { listen } = window.__TAURI__.event;
-const { BaseDirectory, readTextFile, writeFile, removeFile, createDir, exists } = window.__TAURI__.fs; // FS API
-const { appDataDir, join } = window.__TAURI__.path; // Path API
-
+const { BaseDirectory, readTextFile, writeFile, removeFile, createDir, exists } = window.__TAURI__.fs;
+const { appDir, join, resourceDir, appConfigDir, appLogDir, appDataDir } = window.__TAURI__.path; // Added appDir and other path utilities
 
 const logOutput = document.getElementById('logOutput');
 const refreshDevicesBtn = document.getElementById('refreshDevices');
@@ -11,34 +10,24 @@ const deviceListDiv = document.getElementById('deviceList');
 const authorizeAndroidBtn = document.getElementById('authorizeAndroid');
 const batchModeCheckbox = document.getElementById('batchModeCheckbox');
 
-const generateWindowsDeviceCodeBtn = document.getElementById('generateWindowsDeviceCode');
-const currentDeviceCodeSpan = document.getElementById('currentDeviceCode');
-const deviceCodeFilePathDisplay = document.getElementById('deviceCodeFilePathDisplay');
-const selectAuthLicenseDirBtn = document.getElementById('selectAuthLicenseDir');
-const authFileDirDisplay = document.getElementById('authFileDirDisplay');
-const authorizeWindowsBtn = document.getElementById('authorizeWindowsBtn');
+// --- Windows Tab Elements (Revised) ---
+const selectAppDirBtn = document.getElementById('selectAppDirBtn');
+const appDirPathDisplay = document.getElementById('appDirPathDisplay');
+const authorizeWindowsAppBtn = document.getElementById('authorizeWindowsAppBtn');
+const windowsAuthResultP = document.getElementById('windowsAuthResult'); // For displaying combined result
 
-const selectLicenseToVerifyBtn = document.getElementById('selectLicenseToVerify');
-const selectDeviceCodeForVerifyBtn = document.getElementById('selectDeviceCodeForVerify');
-const verifyWindowsLicenseBtn = document.getElementById('verifyWindowsLicenseBtn');
-const verificationResultP = document.getElementById('verificationResult');
 
-let selectedDeviceCodeForAuth = null;
-let selectedAuthFileDir = null;
-let selectedLicenseFileToVerifyPath = null;
-let selectedDeviceCodeFileToVerifyPath = null;
+let selectedAppDir = null; // For Windows application directory
 
 function appendLog(message) {
   logOutput.textContent += message + '\n';
   logOutput.scrollTop = logOutput.scrollHeight;
 }
 
-// 监听来自 Rust 后端的日志事件
 listen('log_message', (event) => {
   appendLog(event.payload);
 });
 
-// Tab 切换逻辑
 function openTab(evt, tabName) {
   var i, tabcontent, tablinks;
   tabcontent = document.getElementsByClassName("tab-content");
@@ -52,8 +41,28 @@ function openTab(evt, tabName) {
   document.getElementById(tabName).style.display = "block";
   evt.currentTarget.className += " active";
 }
-// 默认打开第一个tab
-document.querySelector('.tab-button').click();
+// Default open first tab (or based on preference)
+document.addEventListener('DOMContentLoaded', async () => {
+  document.querySelector('.tab-button').click();
+
+  // Set default application directory for Windows
+  try {
+    // 调用新的 Rust 命令来获取可执行文件所在的目录
+    const exeDir = await invoke('get_executable_dir');
+    if (exeDir) {
+      selectedAppDir = exeDir;
+      appDirPathDisplay.textContent = `${exeDir} (默认)`;
+      appendLog(`默认应用程序目录已设置为: ${exeDir}`);
+    } else {
+      appDirPathDisplay.textContent = '未选择 (请手动选择)';
+      appendLog("未能自动获取默认应用目录，请手动选择。");
+    }
+  } catch (e) {
+    appendLog("获取默认应用目录错误: " + e);
+    appDirPathDisplay.textContent = '未选择 (请手动选择)';
+  }
+  updateWindowsAuthorizeAppButtonState(); // 更新按钮状态
+});
 
 
 // --- Android Tab Logic ---
@@ -72,155 +81,106 @@ if (refreshDevicesBtn) {
 }
 
 if (authorizeAndroidBtn) {
-  authorizeAndroidBtn.addEventListener('click', async () => {
-    const batchMode = batchModeCheckbox.checked;
-    appendLog(`开始 Android 授权 (批量: ${batchMode})...`);
+  authorizeAndroidBtn.addEventListener("click", async () => {
+    const batchMode = batchModeCheckbox.checked; // 保留批量模式的读取
+    appendLog(`开始 Android 授权 (批量模式: ${batchMode})...`);
+    authorizeAndroidBtn.disabled = true;
     try {
-      const result = await invoke('process_android_authorization', { batchMode });
-      appendLog('Android 授权结果: ' + result);
+      // 将 batchMode 传递给后端
+      const result = await invoke("process_android_authorization", {
+        batchMode,
+      });
+      appendLog("Android 授权结果: \n" + result); //  \n for better multi-line display
+      alert("Android 设备授权操作完成！详情请查看日志。");
     } catch (error) {
-      appendLog('Android 授权错误: ' + error);
-    }
-  });
-}
-
-// --- Windows Tab Logic ---
-if (generateWindowsDeviceCodeBtn) {
-  generateWindowsDeviceCodeBtn.addEventListener('click', async () => {
-    appendLog('正在生成 Windows 设备码...');
-    try {
-      const deviceCode = await invoke('generate_windows_device_code');
-      currentDeviceCodeSpan.textContent = deviceCode;
-      selectedDeviceCodeForAuth = deviceCode; // 存储设备码用于后续授权
-      appendLog('Windows 设备码已生成: ' + deviceCode);
-
-      // 询问用户是否要将此设备码保存到文件
-      const confirmed = await window.__TAURI__.dialog.ask(
-          `设备码已生成: ${deviceCode}\n\n是否要将其保存到 device_code.bin 文件中？`,
-          { title: '保存设备码', type: 'info' }
-      );
-
-      if (confirmed) {
-        const filePath = await save({
-          defaultPath: 'device_code.bin',
-          filters: [{ name: 'Device Code File', extensions: ['bin'] }]
-        });
-        if (filePath) {
-          await writeFile({ path: filePath, contents: deviceCode });
-          deviceCodeFilePathDisplay.textContent = filePath;
-          appendLog(`设备码已保存到: ${filePath}`);
-        } else {
-          appendLog('用户取消保存设备码文件。');
-        }
+      appendLog("Android 授权错误: " + error);
+      alert("Android 设备授权失败: " + error);
+    } finally {
+      authorizeAndroidBtn.disabled = false;
+      if (!batchMode) {
+        // 如果是单设备模式
+        appendLog("可以刷新设备列表或连接下一个设备后再次点击授权。");
+      } else {
+        // 如果是批量模式
+        appendLog("批量授权完成。如需操作新设备，请先连接并刷新列表。");
       }
-      updateWindowsAuthButtonState();
-    } catch (error) {
-      currentDeviceCodeSpan.textContent = '生成失败';
-      appendLog('生成 Windows 设备码错误: ' + error);
     }
   });
 }
 
-if (selectAuthLicenseDirBtn) {
-  selectAuthLicenseDirBtn.addEventListener('click', async () => {
+// --- Windows Tab Logic (Revised) ---
+
+if (selectAppDirBtn) {
+  selectAppDirBtn.addEventListener('click', async () => {
     try {
-      const dir = await open({ directory: true, multiple: false, title: "选择授权文件生成目录" });
+      const dir = await open({ directory: true, multiple: false, title: "选择应用程序根目录" });
       if (dir) {
-        selectedAuthFileDir = dir;
-        authFileDirDisplay.textContent = dir;
-        appendLog(`授权文件生成目录选定: ${dir}`);
+        selectedAppDir = dir;
+        appDirPathDisplay.textContent = dir;
+        appendLog(`应用程序目录选定: ${dir}`);
       } else {
         appendLog('用户取消选择目录。');
+        // selectedAppDir = null; // Keep previous if cancelled, or clear if desired
+        // appDirPathDisplay.textContent = '未选择';
       }
-      updateWindowsAuthButtonState();
+      updateWindowsAuthorizeAppButtonState();
     } catch (error) {
       appendLog('选择目录错误: ' + error);
     }
   });
 }
 
-function updateWindowsAuthButtonState() {
-  authorizeWindowsBtn.disabled = !(selectedDeviceCodeForAuth && selectedAuthFileDir);
+function updateWindowsAuthorizeAppButtonState() {
+  authorizeWindowsAppBtn.disabled = !selectedAppDir;
 }
-updateWindowsAuthButtonState(); // Initial check
+// Call on init, after DOMContentLoaded if selectedAppDir might be set by default
+// For now, called after DOMContentLoaded if default logic is added there.
+// If no default is set, this correctly disables button until selection.
 
-if (authorizeWindowsBtn) {
-  authorizeWindowsBtn.addEventListener('click', async () => {
-    if (!selectedDeviceCodeForAuth || !selectedAuthFileDir) {
-      appendLog('请先生成设备码并选择授权文件目录。');
+
+if (authorizeWindowsAppBtn) {
+  authorizeWindowsAppBtn.addEventListener('click', async () => {
+    if (!selectedAppDir) {
+      appendLog('请先选择应用程序目录。');
+      windowsAuthResultP.textContent = '请先选择应用程序目录。';
       return;
     }
-    appendLog(`开始 Windows 授权，设备码: ${selectedDeviceCodeForAuth}, 路径: ${selectedAuthFileDir}`);
+    appendLog(`开始 Windows 应用授权与校验，应用目录: ${selectedAppDir}`);
+    windowsAuthResultP.textContent = '正在授权与校验...';
+    authorizeWindowsAppBtn.disabled = true; // Disable button during operation
+
     try {
-      const result = await invoke('generate_auth_file_cmd', {
-        deviceCode: selectedDeviceCodeForAuth,
-        targetPathStr: selectedAuthFileDir
+      const result = await invoke('authorize_windows_application', {
+        applicationPathStr: selectedAppDir
       });
-      appendLog('Windows 授权成功: ' + result);
-      alert('Windows 授权成功！详情请查看日志。');
+      appendLog('Windows 应用授权与校验完成。');
+      appendLog(`授权消息: ${result.authorization_message}`);
+      appendLog(`校验状态: ${result.verification_status}`);
+
+      windowsAuthResultP.textContent = `授权: ${result.authorization_message}. 校验: ${result.verification_status}`;
+      if (result.verification_details) {
+        appendLog(`校验详情: 设备码=${result.verification_details.device_code}, 序列号=${result.verification_details.serial_number}, 时间=${result.verification_details.issued_at}`);
+        windowsAuthResultP.textContent += ` (设备码: ${result.verification_details.device_code})`;
+      }
+      // Optionally show an alert or more prominent UI update for overall success/failure
+      if (result.verification_status.includes("通过")) {
+        alert('Windows 应用授权和校验成功！详情请查看日志和结果区域。');
+      } else {
+        alert(`Windows 应用授权成功，但自动校验失败或部分成功。详情: ${result.verification_status}`);
+      }
+
     } catch (error) {
-      appendLog('Windows 授权错误: ' + error);
-      alert('Windows 授权失败: ' + error);
+      appendLog('Windows 应用授权与校验错误: ' + error);
+      windowsAuthResultP.textContent = '授权与校验失败: ' + error;
+      alert('Windows 应用授权与校验失败: ' + error);
+    } finally {
+      updateWindowsAuthorizeAppButtonState(); // Re-enable or keep disabled based on state
     }
   });
 }
 
-// Verification part
-if (selectLicenseToVerifyBtn) {
-  selectLicenseToVerifyBtn.addEventListener('click', async () => {
-    const filePath = await open({
-      multiple: false,
-      filters: [{ name: 'License File', extensions: ['lic'] }]
-    });
-    if (filePath) {
-      selectedLicenseFileToVerifyPath = filePath;
-      document.getElementById('selectLicenseToVerify').textContent = `已选授权文件: ...${filePath.slice(-20)}`;
-      appendLog(`选择待验证授权文件: ${filePath}`);
-    }
-    updateVerifyButtonState();
-  });
-}
+// Initial state for the button
+updateWindowsAuthorizeAppButtonState();
 
-if (selectDeviceCodeForVerifyBtn) {
-  selectDeviceCodeForVerifyBtn.addEventListener('click', async () => {
-    const filePath = await open({
-      multiple: false,
-      filters: [{ name: 'Device Code File', extensions: ['bin'] }]
-    });
-    if (filePath) {
-      selectedDeviceCodeFileToVerifyPath = filePath;
-      document.getElementById('selectDeviceCodeForVerify').textContent = `已选设备码文件: ...${filePath.slice(-20)}`;
-      appendLog(`选择待验证设备码文件: ${filePath}`);
-    }
-    updateVerifyButtonState();
-  });
-}
-
-function updateVerifyButtonState() {
-  verifyWindowsLicenseBtn.disabled = !(selectedLicenseFileToVerifyPath && selectedDeviceCodeFileToVerifyPath);
-}
-updateVerifyButtonState();
-
-if (verifyWindowsLicenseBtn) {
-  verifyWindowsLicenseBtn.addEventListener('click', async () => {
-    if (!selectedLicenseFileToVerifyPath || !selectedDeviceCodeFileToVerifyPath) {
-      verificationResultP.textContent = '请先选择授权文件和设备码文件。';
-      return;
-    }
-    appendLog(`开始验证授权文件: ${selectedLicenseFileToVerifyPath}，设备码文件: ${selectedDeviceCodeFileToVerifyPath}`);
-    verificationResultP.textContent = '验证中...';
-    try {
-      const authData = await invoke('check_authorization_cmd', {
-        authFilePathStr: selectedLicenseFileToVerifyPath,
-        deviceCodeFilePathStr: selectedDeviceCodeFileToVerifyPath
-      });
-      verificationResultP.textContent = `验证通过! 设备码: ${authData.device_code}, 序列号: ${authData.serial_number}, 时间: ${authData.issued_at}`;
-      appendLog('验证成功: ' + JSON.stringify(authData));
-    } catch (error) {
-      verificationResultP.textContent = '验证失败: ' + error;
-      appendLog('验证错误: ' + error);
-    }
-  });
-}
 
 appendLog('前端脚本已加载。应用准备就绪。');

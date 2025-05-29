@@ -1,5 +1,3 @@
-use std::io;
-use std::io::ErrorKind;
 use std::process::Command as StdCommand; // 为了区分
 use tauri::async_runtime::spawn_blocking;
 
