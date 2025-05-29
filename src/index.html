@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>授权工具</title>
+
+  </head>
+
+  <body>
+  <div class="container">
+    <h1>授权工具</h1>
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="openTab(event, 'android')">Android 授权</button>
+      <button class="tab-button" onclick="openTab(event, 'windows')">Windows 授权</button>
+    </div>
+
+    <div id="android" class="tab-content" style="display:block;">
+      <h2>Android 设备授权</h2>
+      <button id="refreshDevices">刷新设备列表</button>
+      <div id="deviceList">设备列表: 无</div>
+      <label>
+        <input type="checkbox" id="batchModeCheckbox"> 批量模式
+      </label>
+      <button id="authorizeAndroid">开始 Android 授权</button>
+    </div>
+
+    <div id="windows" class="tab-content">
+      <h2>Windows 授权</h2>
+      <button id="generateWindowsDeviceCode">1. 生成/选择设备码文件</button>
+      <p>当前设备码: <span id="currentDeviceCode">未生成</span></p>
+      <p>设备码文件路径: <span id="deviceCodeFilePathDisplay">未选择</span></p>
+
+      <button id="selectAuthLicenseDir">2. 选择授权文件生成目录</button>
+      <p>授权文件目录: <span id="authFileDirDisplay">未选择</span></p>
+
+      <button id="authorizeWindowsBtn" disabled>3. 执行 Windows 授权</button>
+      <hr/>
+      <button id="selectLicenseToVerify">选择要验证的授权文件(.lic)</button>
+      <button id="selectDeviceCodeForVerify">选择对应的设备码文件(.bin)</button>
+      <button id="verifyWindowsLicenseBtn" disabled>验证 Windows 授权</button>
+      <p id="verificationResult"></p>
+    </div>
+
+    <div class="log-area">
+      <h3>日志:</h3>
+      <pre id="logOutput"></pre>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+  </body>
+</html>

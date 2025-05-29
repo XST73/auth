@@ -1,0 +1,9 @@
+body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
+.container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+.tabs button { padding: 10px; margin-right: 5px; cursor: pointer; border: 1px solid #ccc; background-color: #eee; }
+.tabs button.active { background-color: #ccc; }
+.tab-content { display: none; padding: 15px; border: 1px solid #ddd; margin-top: -1px; }
+.log-area { margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+#logOutput { background-color: #222; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
+button { margin: 5px 0; padding: 8px 12px; }
+p { margin: 8px 0; }
