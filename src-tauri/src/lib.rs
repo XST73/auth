@@ -1,6 +1,6 @@
 mod adb_utils;
 mod en_de_crypt;
-// mod get_device_code;
+mod get_device_code;
 
 use tauri::path::{BaseDirectory, PathResolver};
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, Window, Wry};
