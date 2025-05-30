@@ -682,6 +682,16 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
             app.manage(AppState::new(&app.handle()));
+
+            let window = app.get_webview_window("main").unwrap(); // 获取主窗口的引用
+            #[cfg(target_os = "windows")]
+            {
+                use window_vibrancy::apply_acrylic;
+                if let Err(e) = apply_acrylic(&window, Some((18, 18, 18, 125))) {
+                    eprintln!("Failed to apply Mica effect: {}", e);
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

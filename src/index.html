@@ -1,44 +1,63 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>授权工具</title>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="styles.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>BUPT-VR 小工具</title>
 </head>
 
 <body>
-<div class="container">
-  <h1>授权工具</h1>
+<div class="app-container">
+    <aside class="sidebar">
+        <header class="sidebar-header">
+            <h1>BUPT-VR 小工具</h1>
+        </header>
+        <nav class="tabs">
+            <button class="tab-button" onclick="openTab(event, 'windows')">Windows 授权</button>
+            <button class="tab-button" onclick="openTab(event, 'android')">Android 授权</button>
+        </nav>
+    </aside>
 
-  <div class="tabs">
-    <button class="tab-button active" onclick="openTab(event, 'android')">Android 授权</button>
-    <button class="tab-button" onclick="openTab(event, 'windows')">Windows 授权</button>
-  </div>
+    <div class="content-wrapper">
+        <main class="main-content">
+            <div id="windows" class="tab-content">
+                <section class="content-section">
+                    <h2>Windows 应用授权</h2>
+                    <div class="controls">
+                        <button id="selectAppDirBtn">1. 选择应用程序目录</button>
+                        <p class="info-text">应用程序目录: <span
+                                id="appDirPathDisplay">未选择 (默认为工具所在目录)</span></p>
+                    </div>
+                    <button id="authorizeWindowsAppBtn" class="primary-action" disabled>2. 执行授权与校验</button>
+                    <p id="windowsAuthResult" class="info-text result-text">授权与校验结果: 未执行</p>
+                </section>
+            </div>
 
-  <div id="android" class="tab-content" style="display:block;">
-    <h2>Android 设备授权</h2>
-    <button id="refreshDevices">刷新设备列表</button>
-    <div id="deviceList">设备列表: 无</div>
-    <label>
-      <input type="checkbox" id="batchModeCheckbox"> 批量模式
-    </label>
-    <button id="authorizeAndroid">开始 Android 授权</button>
-  </div>
+            <div id="android" class="tab-content">
+                <section class="content-section">
+                    <h2>Android 设备授权</h2>
+                    <div class="controls">
+                        <button id="refreshDevices">刷新设备列表</button>
+                        <div class="device-status">
+                            设备列表: <span id="deviceList">无</span>
+                        </div>
+                        <label class="switch-label" for="batchModeCheckbox">
+                            批量模式
+                            <input type="checkbox" id="batchModeCheckbox">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <button id="authorizeAndroid" class="primary-action">开始 Android 授权</button>
+                </section>
+            </div>
+        </main>
 
-  <div id="windows" class="tab-content">
-    <h2>Windows 应用授权</h2>
-    <button id="selectAppDirBtn">1. 选择应用程序目录</button>
-    <p>应用程序目录: <span id="appDirPathDisplay">未选择 (默认为工具所在目录)</span></p>
-
-    <button id="authorizeWindowsAppBtn" disabled>2. 执行授权与校验</button>
-    <p id="windowsAuthResult">授权与校验结果: 未执行</p>
-  </div>
-
-  <div class="log-area">
-    <h3>日志:</h3>
-    <pre id="logOutput"></pre>
-  </div>
+        <footer class="status-bar">
+            <div id="statusText" class="status-text">准备就绪</div>
+            <progress id="progressBar" value="0" max="100" style="display: none;"></progress>
+        </footer>
+    </div>
 </div>
 
 <script src="main.js"></script>

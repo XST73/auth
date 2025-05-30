@@ -297,6 +297,7 @@ dependencies = [
  "tauri-plugin-process",
  "tauri-plugin-shell",
  "uuid",
+ "window-vibrancy",
 ]
 
 [[package]]
