@@ -356,3 +356,39 @@ p {
     margin: 10px 0;
     color: var(--text-color);
 }
+
+.titlebar {
+    position: fixed; /* Or absolute, depending on layout */
+    top: 0;
+    left: 0; /* Adjust if your sidebar has a different data-tauri-drag-region setup */
+    right: 0;
+    height: 30px; /* Adjust as needed */
+    background: transparent; /* Titlebar itself is transparent */
+    display: flex;
+    justify-content: flex-end; /* Aligns buttons to the right */
+    align-items: center;
+    padding-right: 7px;
+    user-select: none;
+    z-index: 1000; /* Ensure it's on top */
+    box-sizing: border-box;
+}
+
+.titlebar-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.15s ease-out;
+}
+
+.titlebar-button:hover {
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+.titlebar-button img {
+    width: 16px; /* Adjust icon size */
+    height: 16px;
+}

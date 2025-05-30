@@ -1,5 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
+const { getCurrentWindow } = window.__TAURI__.window; // Import appWindow for window controls
 const { listen } = window.__TAURI__.event; //
 // fs and path imports are not directly used in the provided snippet for this change, but keep them if used elsewhere.
 
@@ -18,6 +19,12 @@ const windowsAuthResultP = document.getElementById('windowsAuthResult');
 // New Status/Progress Bar Elements
 const statusText = document.getElementById('statusText');
 const progressBar = document.getElementById('progressBar');
+
+const minimizeBtn = document.getElementById('titlebar-minimize');
+const maximizeBtn = document.getElementById('titlebar-maximize');
+const closeBtn = document.getElementById('titlebar-close');
+
+const appWindow = getCurrentWindow();
 
 let selectedAppDir = null;
 
@@ -107,6 +114,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     updateWindowsAuthorizeAppButtonState();
     updateStatus('前端脚本已加载。应用准备就绪。');
+
+    if (minimizeBtn) {
+        minimizeBtn.addEventListener('click', () => appWindow.minimize());
+    }
+    if (maximizeBtn) {
+        maximizeBtn.addEventListener('click', () => appWindow.toggleMaximize());
+    }
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => appWindow.close());
+    }
 });
 
 
@@ -118,11 +135,11 @@ if (refreshDevicesBtn) {
         updateProgress(30); // Example: indeterminate start
         try {
             const devices = await invoke('list_adb_devices');
-            deviceListDiv.textContent = '设备列表: ' + (devices.length > 0 ? devices.join(', ') : '无设备连接');
+            deviceListDiv.textContent = (devices.length > 0 ? devices.join(', ') : '无设备连接');
             updateStatus('设备列表刷新成功: ' + (devices.length > 0 ? devices.join(', ') : '无设备连接'));
             updateProgress(100);
         } catch (error) {
-            deviceListDiv.textContent = '设备列表: 获取失败';
+            deviceListDiv.textContent = '获取失败';
             updateStatus('获取设备列表错误: ' + error, true);
             updateProgress(100); // Still complete the "progress" even if error
         } finally {
