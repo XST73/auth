@@ -8,18 +8,15 @@
 </head>
 
 <body>
-<div class="app-container">
-    <div class="titlebar" data-tauri-drag-region>
-        <div class="titlebar-button" id="titlebar-minimize">
-            <img src="https://api.iconify.design/mdi:window-minimize.svg?color=%23888888" alt="minimize" />
-        </div>
-        <div class="titlebar-button" id="titlebar-maximize">
-            <img src="https://api.iconify.design/mdi:window-maximize.svg?color=%23888888" alt="maximize" />
-        </div>
-        <div class="titlebar-button" id="titlebar-close">
-            <img src="https://api.iconify.design/mdi:close.svg?color=%23888888" alt="close" />
-        </div>
+<div class="titlebar" data-tauri-drag-region>
+    <div class="titlebar-button-container">
+        <div class="titlebar-button" id="titlebar-close"><span></span></div>
+        <div class="titlebar-button" id="titlebar-minimize"><span></span></div>
+        <div class="titlebar-button" id="titlebar-maximize"><span></span></div>
     </div>
+</div>
+
+<div class="app-container">
     <aside class="sidebar">
         <header class="sidebar-header">
             <h1>BUPT-VR 小工具</h1>
