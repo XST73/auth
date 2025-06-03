@@ -687,7 +687,7 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             {
                 use window_vibrancy::apply_acrylic;
-                if let Err(e) = apply_acrylic(&window, Some((18, 18, 18, 125))) {
+                if let Err(e) = apply_acrylic(&window, None) {
                     eprintln!("Failed to apply Mica effect: {}", e);
                 }
             }
